@@ -1,42 +1,51 @@
 package foodexpress
+import kotlinx.coroutines.*
 
 fun main() {
-    val productos: List<Producto> = listOf(
-                ProductoPrincipal("Hambuerguesa Clasica", 8.990, false),
-                ProductoPrincipal("Salmon Grillado", 15.990, true),
-                ProductoBebida("Coca Cola", 1.990, "mediano" ),
-                ProductoBebida("Jugo Natural", 2.990, "grande" )
+    println("Cliente tipo (regular/vip/premium): ")
+    val tipoInput = readln().lowercase()
+    val tipoCliente = when(tipoInput){
+        "vip" -> TipoCliente.vip
+        "premium" -> TipoCliente.prenium
+        else -> TipoCliente.regular
+    }
 
+    val productos: List<Producto> = listOf(
+        ProductoPrincipal("Hamburguesa Clasica", 8990.0, false),
+        ProductoPrincipal("Salmon Grillado", 15990.0, false),
+        ProductoBebida("Coca Cola", 1990.0),
+        ProductoBebida("Jugo Natural", 2990.0)
     )
 
-    println("Catalogo: ")
-
-    for (producto in productos) {
-        when (producto) {
-            is ProductoPrincipal -> println("ProductoPincipal: ${producto.nombre},Precio: $${producto.precio}, Premium= ${producto.Premium}")
-            is ProductoBebida -> println("ProductoBebida: ${producto.nombre}, Precio: $${producto.precio}, Tamano= ${producto.tamano}")
-            else -> println("Seleccion no valida")
+    println("\nCatalogo: ")
+    for ((index, producto) in productos.withIndex()) {
+        when(producto){
+            is ProductoPrincipal -> println("${index +1}. ProductoPrincipal: ${producto.nombre}, Precio: \$${producto.precio}")
+            is ProductoBebida -> println("${index + 1}. ProductoBebida: ${producto.nombre}, Precio base: \$${producto.precio}")
         }
     }
 
-    print("Ingrese los números de los productos separados por coma (ejemplo: 1,3,4): ")
+    print("\nIngrese los números de los productos separados por coma (ejemplo: 1,3,4): ")
     val entrada = readln()
 
     val numerosSeleccionados = entrada.split(",")
         .mapNotNull { it.trim().toIntOrNull() }
         .filter { it in 1..productos.size }
 
-    val gestorPedidos = GestorPedidos()
+    val gestorPedidos = GestorPedidos(tipoCliente)
 
-    for (num in numerosSeleccionados) {
+    for(num in numerosSeleccionados){
         val productoSeleccionado = productos[num - 1]
-        gestorPedidos.agregarProducto(productoSeleccionado)
-        println("Agregado: ${productoSeleccionado.nombre}")
+        gestorPedidos.procesarProductoSeleccionado(productoSeleccionado)
     }
 
     gestorPedidos.mostrarPedido()
 
+    println("\n=== Simulación de preparación del pedido ===")
+    runBlocking {
+        gestorPedidos.simularPreparacion()
+    }
+
     val total = gestorPedidos.calcularTotal()
     println("Total del pedido: \$${"%.2f".format(total)}")
-
 }
